@@ -50,20 +50,39 @@ with st.container(border=True):
             st.session_state.selected_idea = None
             st.session_state.script = None
 
+# In streamlit_app.py, find and replace this entire 'if' block
+
 if 'ideas_with_links' in st.session_state and st.session_state.ideas_with_links:
     st.subheader("Your Generated Ideas & References:")
     for i, item in enumerate(st.session_state.ideas_with_links):
         st.markdown(f"**Idea {i+1}: {item['idea']}**")
 
-        with st.expander("Show Reference Links"):
-            for link in item['links']:
-                st.markdown(f"- [{link['title']}]({link['link']})")
+        # Create separate expanders for each link category
+        with st.expander("📄 Show Web Article References"):
+            if item['links']['articles']:
+                for link in item['links']['articles']:
+                    st.markdown(f"- [{link['title']}]({link['link']})")
+            else:
+                st.write("No articles found.")
+
+        with st.expander("▶️ Show YouTube Shorts Inspiration"):
+            if item['links']['youtube']:
+                for link in item['links']['youtube']:
+                    st.markdown(f"- [{link['title']}]({link['link']})")
+            else:
+                st.write("No YouTube Shorts found.")
+
+        with st.expander("📸 Show Instagram Reels Inspiration"):
+            if item['links']['instagram']:
+                for link in item['links']['instagram']:
+                    st.markdown(f"- [{link['title']}]({link['link']})")
+            else:
+                st.write("No Instagram Reels found.")
 
         if st.button(f"Develop this idea", key=f"idea_{i}"):
             st.session_state.selected_idea = item['idea']
             st.session_state.script = None
             st.rerun()
-
 
 # --- Step 3: Develop the Chosen Idea ---
 if st.session_state.selected_idea:
