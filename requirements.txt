@@ -1,0 +1,14 @@
+# Core App
+streamlit
+python-dotenv
+
+# LLM & Machine Learning
+transformers
+torch 
+# For Apple Silicon, you might need: torch torchvision torchaudio
+# For CUDA-enabled GPUs, follow PyTorch official installation instructions.
+
+# Trend Providers
+pytrends
+yt-dlp
+snscrape
