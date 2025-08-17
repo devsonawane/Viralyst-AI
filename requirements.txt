@@ -12,3 +12,4 @@ torch
 pytrends
 yt-dlp
 snscrape
+google-search-results

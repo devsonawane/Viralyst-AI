@@ -38,23 +38,32 @@ with st.container(border=True):
         tone = st.selectbox("Select your tone:", ["Educational", "Humorous", "Inspirational", "Sarcastic", "Emotional"])
         persona = st.text_area("Optional: Describe your creator persona:", "A friendly, slightly nerdy guide who makes sustainability feel easy and accessible, not preachy.")
 
+
 # --- Step 2: Generate Ideas ---
 st.header("Step 2: Generate Content Ideas")
 with st.container(border=True):
-    trend_based = st.toggle("Incorporate current trends?", value=True)
-    if st.button("✨ Generate Ideas", type="primary"):
-        with st.spinner("Brainstorming..."):
-            st.session_state.ideas = st.session_state.chatbot.generate_ideas(niche, tone, audience, trend_based)
+    # The trend toggle is removed for simplicity in this new model
+    if st.button("✨ Generate Ideas & Find References", type="primary"):
+        with st.spinner("Brainstorming and searching for references..."):
+            # Note the function call has changed
+            st.session_state.ideas_with_links = st.session_state.chatbot.generate_ideas_with_links(niche, tone, audience)
             st.session_state.selected_idea = None
             st.session_state.script = None
 
-    if st.session_state.ideas:
-        st.subheader("Your Generated Ideas:")
-        for i, idea in enumerate(st.session_state.ideas):
-            if st.button(idea, key=f"idea_{i}"):
-                st.session_state.selected_idea = idea
-                st.session_state.script = None # Reset script when new idea is chosen
-                st.rerun()
+if 'ideas_with_links' in st.session_state and st.session_state.ideas_with_links:
+    st.subheader("Your Generated Ideas & References:")
+    for i, item in enumerate(st.session_state.ideas_with_links):
+        st.markdown(f"**Idea {i+1}: {item['idea']}**")
+
+        with st.expander("Show Reference Links"):
+            for link in item['links']:
+                st.markdown(f"- [{link['title']}]({link['link']})")
+
+        if st.button(f"Develop this idea", key=f"idea_{i}"):
+            st.session_state.selected_idea = item['idea']
+            st.session_state.script = None
+            st.rerun()
+
 
 # --- Step 3: Develop the Chosen Idea ---
 if st.session_state.selected_idea:

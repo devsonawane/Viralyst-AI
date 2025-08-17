@@ -1,13 +1,27 @@
-def repurpose(llm_pipeline, script, original_platform, target_platforms):
-    """Repurposes content for different platforms."""
-    repurposed_content = {}
-    for target_platform in target_platforms:
-        prompt = f"You are a social media expert. Adapt the following '{original_platform}' script into a '{target_platform}'.\n"
-        prompt += f"Keep the core message but change the format, tone, and add relevant emojis or formatting (like line breaks for LinkedIn or a thread structure for Twitter).\n"
-        prompt += f"Original Script: '{script}'\n"
-        prompt += f"Provide only the text for the new post."
+# crossposting/repurposer.py
 
-        response = llm_pipeline(prompt, max_length=400)
-        repurposed_content[target_platform] = response[0]['generated_text'].strip()
-        
+def repurpose(script, original_platform, target_platforms):
+    """
+    Repurposes content for different platforms using templates.
+    This function no longer requires a local AI model.
+    """
+    repurposed_content = {}
+    print(f"--- Repurposing script for platforms: {', '.join(target_platforms)} ---")
+
+    for target_platform in target_platforms:
+        # Create repurposed content using a simple, reliable template
+        header = f"🚀 Repurposed from a {original_platform} script!\n\n"
+
+        if "LinkedIn" in target_platform or "Facebook" in target_platform:
+            # Format for professional/social platforms
+            body = script.replace(". ", ".\n\n") # Add line breaks for readability
+            repurposed_text = f"{header}{body}"
+        elif "Twitter" in target_platform:
+            # Format for a Twitter thread
+            repurposed_text = f"1/ Here's a quick breakdown of my latest video topic. (thread)\n\n{script[:200]}..."
+        else:
+            repurposed_text = f"{header}{script}"
+
+        repurposed_content[target_platform] = repurposed_text
+
     return repurposed_content
