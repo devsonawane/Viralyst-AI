@@ -15,3 +15,5 @@ snscrape
 google-search-results
 google-generativeai
 pexels-api
+requests
+beautifulsoup4
