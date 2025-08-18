@@ -1,6 +1,6 @@
 import os
 from dotenv import load_dotenv
-from generators import idea_generator, script_generator, calendar_generator, analyzer_generator
+from generators import idea_generator, script_generator, calendar_generator, analyzer_generator, localization_generator, trend_predictor
 from crossposting import repurposer
 import google.generativeai as genai
 
@@ -14,14 +14,10 @@ class Chatbot:
         self.search_api_key = os.getenv("SERPAPI_API_KEY")
         self.pexels_api_key = os.getenv("PEXELS_API_KEY")
 
+    # --- Existing Functions ---
     def generate_content_plan(self, niche, tone, audience, plan_type):
-        """
-        This function now correctly passes all arguments.
-        """
         if not self.search_api_key or not self.pexels_api_key:
             return [{"idea": "ERROR: Search or Pexels API Key is not configured.", "links": [], "images": []}]
-        
-        # --- THIS IS THE FIX ---
         return idea_generator.generate_plan_with_visuals(
             search_api_key=self.search_api_key,
             pexels_api_key=self.pexels_api_key,
@@ -30,7 +26,6 @@ class Chatbot:
             audience=audience,
             plan_type=plan_type
         )
-        # ----------------------
 
     def generate_script(self, idea, platform, persona=None):
         if not self.gemini_api_key: return {"error": "Gemini API Key not configured."}
@@ -51,3 +46,12 @@ class Chatbot:
         if not self.gemini_api_key: return {"error": "Gemini API Key not configured."}
         return analyzer_generator.analyze_post(url)
 
+    # --- NEW: Multilingual Function ---
+    def generate_localized_ideas(self, niche, audience, tone, language, region):
+        if not self.gemini_api_key: return {"error": "Gemini API Key not configured."}
+        return localization_generator.generate_localized_ideas(niche, audience, tone, language, region)
+
+    # --- NEW: Trend Predictor Function ---
+    def predict_future_trend(self, niche):
+        if not self.gemini_api_key: return {"error": "Gemini API Key not configured."}
+        return trend_predictor.predict_trend(niche)

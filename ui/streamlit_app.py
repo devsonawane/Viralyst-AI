@@ -23,14 +23,23 @@ if 'calendar_result' not in st.session_state:
     st.session_state.calendar_result = None
 if 'analysis_result' not in st.session_state:
     st.session_state.analysis_result = None
-
+if 'localized_result' not in st.session_state:
+    st.session_state.localized_result = None
+if 'trend_result' not in st.session_state:
+    st.session_state.trend_result = None
 
 # --- UI Layout ---
 st.title("🤖 AI Content Strategy Suite")
-st.markdown("Go beyond ideas. Generate strategic plans, analyze viral hits, and create standout content.")
+st.markdown("Generate strategic plans, analyze viral hits, create multilingual content, and predict future trends.")
 
 # --- Tabbed Interface ---
-tab1, tab2, tab3 = st.tabs(["💡 Idea & Script Generator", "🗓️ Content Calendar", "🔍 Viral Post Analyzer"])
+tab1, tab2, tab3, tab4, tab5 = st.tabs([
+    "💡 Idea & Script Generator", 
+    "🗓️ Content Calendar", 
+    "🔍 Viral Post Analyzer",
+    "🌍 Multilingual Ideation",
+    "🔮 Future Trends"
+])
 
 # --- TAB 1: Idea & Script Generator ---
 with tab1:
@@ -69,24 +78,15 @@ with tab1:
                     st.markdown("##### Visual Mood Board")
                     st.image(item['images'], width=150)
                 with st.expander("Show Research & References"):
-                    # --- THIS IS THE FIX ---
-                    # Changed from list comprehension to a standard for loop
                     st.markdown("**Articles:**")
-                    for l in item['links']['articles']:
-                        st.markdown(f"- [{l['title']}]({l['link']})")
-                    
+                    for l in item['links']['articles']: st.markdown(f"- [{l['title']}]({l['link']})")
                     st.markdown("**YouTube Inspiration:**")
-                    for l in item['links']['youtube']:
-                        st.markdown(f"- [{l['title']}]({l['link']})")
-
+                    for l in item['links']['youtube']: st.markdown(f"- [{l['title']}]({l['link']})")
                     st.markdown("**Instagram Inspiration:**")
-                    for l in item['links']['instagram']:
-                        st.markdown(f"- [{l['title']}]({l['link']})")
-
+                    for l in item['links']['instagram']: st.markdown(f"- [{l['title']}]({l['link']})")
                     st.markdown("**Reddit Discussions:**")
-                    for l in item['links']['reddit']:
-                        st.markdown(f"- [{l['title']}]({l['link']})")
-                
+                    for l in item['links']['reddit']: st.markdown(f"- [{l['title']}]({l['link']})")
+
                 if st.button(f"Develop Script for Idea {i+1}", key=f"idea_{i}"):
                     st.session_state.selected_idea = item['idea']
                     st.session_state.script = None
@@ -112,9 +112,7 @@ with tab1:
                         else:
                             st.metric("Virality Score", st.session_state.hook_analysis.get('score', 'N/A'))
                             st.markdown("**Feedback:**"); st.write(st.session_state.hook_analysis.get('feedback', 'N/A'))
-                            st.markdown("**Suggested Alternatives:**")
-                            for alt in st.session_state.hook_analysis.get('alternatives', []):
-                                st.success(alt)
+                            st.markdown("**Suggested Alternatives:**"); [st.success(alt) for alt in st.session_state.hook_analysis.get('alternatives', [])]
                     st.markdown("---")
                     st.markdown("#### 📜 Script"); st.text_area("Script Body", value=st.session_state.script.get('script', 'N/A'), height=200)
                     st.markdown("#### #️⃣ Hashtags"); st.success(st.session_state.script.get('hashtags', 'N/A'))
@@ -142,7 +140,8 @@ with tab2:
             else:
                 st.warning("Please provide both a niche and an audience.")
 
-    if st.session_state.calendar_result:
+    # --- THIS IS THE FIX ---
+    if 'calendar_result' in st.session_state and st.session_state.calendar_result:
         result = st.session_state.calendar_result
         if "error" in result: st.error(result['error'])
         else:
@@ -165,10 +164,66 @@ with tab3:
             else:
                 st.warning("Please enter a URL.")
 
-    if st.session_state.analysis_result:
+    # --- THIS IS THE FIX ---
+    if 'analysis_result' in st.session_state and st.session_state.analysis_result:
         result = st.session_state.analysis_result
         if "error" in result: st.error(result['error'])
         else:
             st.markdown("### Strategic Analysis:")
             st.markdown(result['analysis_text'])
+
+# --- TAB 4: Multilingual Ideation ---
+with tab4:
+    st.header("Multilingual & Localized Content Ideation")
+    st.markdown("Generate ideas in a specific language, adapted with local cultural references.")
+    
+    with st.container(border=True):
+        col1, col2 = st.columns(2)
+        with col1:
+            loc_lang = st.selectbox("Select Target Language:", ["Spanish", "French", "German", "Hindi", "Japanese", "Portuguese"])
+            loc_niche = st.text_input("Enter your niche:", key="loc_niche")
+            loc_tone = st.text_input("Enter your desired tone:", key="loc_tone")
+        with col2:
+            loc_region = st.text_input("Enter Target Region/Country (e.g., Mexico, France, India):", key="loc_region")
+            loc_audience = st.text_input("Describe your target audience:", key="loc_audience")
+
+        if st.button("🌍 Generate Localized Ideas", type="primary"):
+            if all([loc_lang, loc_niche, loc_tone, loc_region, loc_audience]):
+                with st.spinner(f"Generating ideas in {loc_lang} for {loc_region}..."):
+                    st.session_state.localized_result = st.session_state.chatbot.generate_localized_ideas(loc_niche, loc_audience, loc_tone, loc_lang, loc_region)
+            else:
+                st.warning("Please fill in all fields.")
+
+    # --- THIS IS THE FIX ---
+    if 'localized_result' in st.session_state and st.session_state.localized_result:
+        result = st.session_state.localized_result
+        if "error" in result:
+            st.error(result['error'])
+        else:
+            st.markdown("### Your Localized Content Ideas:")
+            st.info(result['ideas_text'])
+
+# --- TAB 5: Future Trend Fortune Teller ---
+with tab5:
+    st.header("The Trend Oracle 🔮")
+    st.markdown("Get a playful but insightful prediction of a future viral trend in your niche.")
+    
+    with st.container(border=True):
+        trend_niche = st.text_input("Enter your niche to get a trend prediction:", key="trend_niche")
+        
+        if st.button("👁️ Predict the Future", type="primary"):
+            if trend_niche:
+                with st.spinner("Gazing into the future of content..."):
+                    st.session_state.trend_result = st.session_state.chatbot.predict_future_trend(trend_niche)
+            else:
+                st.warning("Please enter a niche.")
+
+    # --- THIS IS THE FIX ---
+    if 'trend_result' in st.session_state and st.session_state.trend_result:
+        result = st.session_state.trend_result
+        if "error" in result:
+            st.error(result['error'])
+        else:
+            st.markdown("### The Oracle Has Spoken:")
+            st.success(result['prediction_text'])
 

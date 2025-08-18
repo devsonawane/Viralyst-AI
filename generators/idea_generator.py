@@ -28,7 +28,7 @@ def get_mood_board_images(api_key, query, num_images=3):
 
 def generate_plan_with_visuals(search_api_key, pexels_api_key, niche, tone, audience, plan_type):
     """
-    The new core function that generates ideas/series, finds links, and creates a mood board.
+    Generates ideas/series, finds links, and creates a mood board.
     """
     print(f"--- Generating a {plan_type} for niche: {niche} ---")
     
@@ -52,13 +52,11 @@ def generate_plan_with_visuals(search_api_key, pexels_api_key, niche, tone, audi
     for idea in ideas:
         print(f"--- Researching idea: '{idea}' ---")
         
-        # --- NEW: AI-Powered Keyword Generation ---
         keyword_prompt = f"Based on the content idea '{idea}', generate 3 short, effective search keywords. Provide only the keywords, separated by commas."
         keyword_response = model.generate_content(keyword_prompt)
         keywords = [k.strip() for k in keyword_response.text.split(',')]
-        primary_keyword = keywords[0] if keywords else idea # Use the first keyword for best results
+        primary_keyword = keywords[0] if keywords else idea
         print(f"--- Generated Keywords for Search: {keywords} ---")
-        # -----------------------------------------
 
         results.append({
             "idea": idea,
@@ -66,7 +64,7 @@ def generate_plan_with_visuals(search_api_key, pexels_api_key, niche, tone, audi
                 "articles": perform_search(search_api_key, primary_keyword),
                 "youtube": perform_search(search_api_key, f"site:youtube.com {primary_keyword} shorts tutorial"),
                 "instagram": perform_search(search_api_key, f"site:instagram.com reel {primary_keyword}"),
-                "reddit": perform_search(search_api_key, f"site:reddit.com {primary_keyword} tips discussion") # New Reddit Search
+                "reddit": perform_search(search_api_key, f"site:reddit.com {primary_keyword} tips discussion")
             },
             "images": get_mood_board_images(pexels_api_key, primary_keyword)
         })
