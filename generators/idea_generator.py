@@ -1,62 +1,72 @@
-# generators/idea_generator.py
 from serpapi import GoogleSearch
+from pexels_api import API
 import os
+import google.generativeai as genai
 
 def perform_search(api_key, query, num_results=2):
-    """A helper function to perform a single Google search."""
+    """Helper function to perform a Google search."""
+    # (This function remains the same as before)
     try:
-        params = {
-            "q": query,
-            "api_key": api_key,
-            "num": num_results
-        }
+        params = {"q": query, "api_key": api_key, "num": num_results}
         search = GoogleSearch(params)
         search_results = search.get_dict()
-
-        links = []
-        if "organic_results" in search_results:
-            for result in search_results["organic_results"]:
-                links.append({
-                    "title": result.get("title"),
-                    "link": result.get("link")
-                })
+        links = [{"title": r.get("title"), "link": r.get("link")} for r in search_results.get("organic_results", [])]
         return links
     except Exception as e:
         print(f"--- ERROR during Google Search for '{query}': {e} ---")
-        return [{"title": f"Search failed for {query}", "link": "#"}]
+        return []
 
+def get_mood_board_images(api_key, query, num_images=3):
+    """Fetches images from Pexels to create a visual mood board."""
+    try:
+        api = API(api_key)
+        api.search(query, page=1, results_per_page=num_images)
+        photos = api.get_entries()
+        return [photo.src['medium'] for photo in photos]
+    except Exception as e:
+        print(f"--- ERROR during Pexels API call for '{query}': {e} ---")
+        return []
 
-def generate_with_references(api_key, niche, tone, audience):
+def generate_plan_with_visuals(search_api_key, pexels_api_key, niche, tone, audience, plan_type):
     """
-    Generates ideas and finds categorized reference links for them.
+    The new core function that generates ideas/series, finds links, and creates a mood board.
     """
-    print(f"--- Generating ideas for niche: {niche} ---")
+    print(f"--- Generating a {plan_type} for niche: {niche} ---")
+    
+    # 1. Generate ideas using Gemini AI for higher quality
+    model = genai.GenerativeModel('gemini-1.5-flash')
+    num_ideas = 3 if plan_type == 'Single Idea' else 5
+    prompt = f"""
+    You are a creative strategist. Brainstorm a list of {num_ideas} engaging content ideas for a creator.
+    If the request is for a 'Content Series', the ideas must build on each other logically.
+    
+    **Niche:** {niche}
+    **Audience:** {audience}
+    **Tone:** {tone}
 
-    # 1. Generate ideas (same as before)
-    ideas = [
-        f"A {tone} guide to {niche} for beginners",
-        f"Why {audience} struggle with {niche} (and how to fix it)",
-        f"The top 3 myths about {niche} debunked"
-    ]
-
+    Provide only a numbered list of the ideas.
+    """
+    response = model.generate_content(prompt)
+    ideas = [line.strip().lstrip('0123456789.-* ') for line in response.text.split('\n') if line.strip()]
+    
     results = []
-
-    # 2. For each idea, perform multiple targeted searches
+    
+    # 2. For each idea, get links and mood board images
     for idea in ideas:
-        print(f"--- Searching for all references for idea: '{idea}' ---")
-
-        # Use the helper function to get different types of links
-        article_links = perform_search(api_key, idea)
-        youtube_links = perform_search(api_key, f"site:youtube.com {idea} shorts")
-        instagram_links = perform_search(api_key, f"site:instagram.com reel {idea}")
-
-        # Store the categorized links
-        categorized_links = {
-            "articles": article_links,
-            "youtube": youtube_links,
-            "instagram": instagram_links
-        }
-
-        results.append({"idea": idea, "links": categorized_links})
-
+        print(f"--- Researching idea: '{idea}' ---")
+        
+        # Use a simplified query for better image results
+        image_query = f"{niche} {tone}"
+        
+        results.append({
+            "idea": idea,
+            "links": {
+                "articles": perform_search(search_api_key, idea),
+                "youtube": perform_search(search_api_key, f"site:youtube.com {idea} shorts"),
+                "instagram": perform_search(search_api_key, f"site:instagram.com reel {idea}")
+            },
+            "images": get_mood_board_images(pexels_api_key, image_query)
+        })
+            
     return results
+

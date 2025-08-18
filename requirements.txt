@@ -14,3 +14,4 @@ yt-dlp
 snscrape
 google-search-results
 google-generativeai
+pexels-api
