@@ -17,12 +17,11 @@ def generate_with_ai(idea, platform, persona=None):
     **Platform:** {platform}
     **Creator Persona:** "{persona if persona else 'An engaging and knowledgeable creator'}"
 
-    Please generate the following, with each section clearly labeled:
-    
-    1.  **HOOK:** A single, powerful sentence (under 10 words).
-    2.  **SCRIPT:** A detailed, 3-part script (approx. 150 words) with visual cues in parentheses.
-    3.  **CTA (Call to Action):** An engaging question or directive.
-    4.  **HASHTAGS:** A list of 5-7 relevant hashtags.
+    Please generate the following, with each section clearly labeled on a new line:
+    **HOOK:**
+    **SCRIPT:**
+    **CTA:**
+    **HASHTAGS:**
     """
 
     try:
@@ -30,28 +29,36 @@ def generate_with_ai(idea, platform, persona=None):
         generated_text = response.text
         print(f"--- Raw AI output: {generated_text} ---")
 
-        # --- New, More Robust Parsing Logic ---
-        script_details = {}
+        # --- Final, Most Robust Parsing Logic ---
+        script_details = {
+            'hook': 'Could not parse hook.',
+            'script': 'Could not parse script.',
+            'cta': 'Could not parse CTA.',
+            'hashtags': 'Could not parse hashtags.'
+        }
+
+        # Use re.split to break the text into sections based on the labels
+        # This is the most reliable method
+        parts = re.split(r'\*\*(HOOK:|SCRIPT:|CTA:|HASHTAGS:)\*\*', generated_text, flags=re.IGNORECASE)
         
-        # Use regular expressions to find content after our keywords, ignoring numbers/formatting
-        hook_match = re.search(r'HOOK:(.*?)SCRIPT:', generated_text, re.DOTALL | re.IGNORECASE)
-        script_match = re.search(r'SCRIPT:(.*?)CTA', generated_text, re.DOTALL | re.IGNORECASE)
-        cta_match = re.search(r'CTA \(Call to Action\):(.*?)HASHTAGS:', generated_text, re.DOTALL | re.IGNORECASE)
-        hashtags_match = re.search(r'HASHTAGS:(.*)', generated_text, re.DOTALL | re.IGNORECASE)
-
-        script_details['hook'] = hook_match.group(1).strip() if hook_match else "Could not parse hook."
-        script_details['script'] = script_match.group(1).strip() if script_match else "Could not parse script."
-        script_details['cta'] = cta_match.group(1).strip() if cta_match else "Could not parse CTA."
-        script_details['hashtags'] = hashtags_match.group(1).strip() if hashtags_match else "Could not parse hashtags."
-
-        # Fallback for when the AI uses a simple numbered list
-        if "Could not parse" in script_details['hook']:
-            lines = [line.strip() for line in generated_text.split('\n') if line.strip()]
-            if len(lines) >= 4:
-                script_details['hook'] = re.sub(r'^\d+\.\s*\*\*HOOK:\*\*\s*', '', lines[0], flags=re.IGNORECASE)
-                script_details['script'] = re.sub(r'^\d+\.\s*\*\*SCRIPT:\*\*\s*', '', lines[1], flags=re.IGNORECASE)
-                script_details['cta'] = re.sub(r'^\d+\.\s*\*\*CTA \(Call to Action\):\*\*\s*', '', lines[2], flags=re.IGNORECASE)
-                script_details['hashtags'] = re.sub(r'^\d+\.\s*\*\*HASHTAGS:\*\*\s*', '', lines[3], flags=re.IGNORECASE)
+        # The resulting list will be like ['', 'HOOK:', 'content', 'SCRIPT:', 'content', ...]
+        if len(parts) > 1:
+            # Start from the first label
+            i = 1
+            while i < len(parts):
+                label = parts[i].replace(":", "").strip().lower()
+                content = parts[i+1].strip() if (i+1) < len(parts) else ""
+                
+                if label == 'hook':
+                    script_details['hook'] = content
+                elif label == 'script':
+                    script_details['script'] = content
+                elif label == 'cta':
+                    script_details['cta'] = content
+                elif label == 'hashtags':
+                    script_details['hashtags'] = content
+                
+                i += 2
 
         return script_details
 
