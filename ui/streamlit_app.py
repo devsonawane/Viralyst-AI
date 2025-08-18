@@ -11,7 +11,7 @@ st.set_page_config(page_title="Content Ideation Chatbot", layout="wide")
 
 # Initialize the chatbot in session state
 if 'chatbot' not in st.session_state:
-    with st.spinner("Warming up the creative engine... (This may take a moment on first launch)"):
+    with st.spinner("Warming up the creative engine..."):
         st.session_state.chatbot = Chatbot()
 
 # --- UI Layout ---
@@ -19,45 +19,38 @@ st.title("🤖 Content Ideation & Repurposing Chatbot")
 st.markdown("Your AI partner for creating unique, trend-aware content across all your platforms.")
 
 # --- State Management ---
-if 'ideas' not in st.session_state:
-    st.session_state.ideas = []
+if 'ideas_with_links' not in st.session_state:
+    st.session_state.ideas_with_links = []
 if 'selected_idea' not in st.session_state:
     st.session_state.selected_idea = None
 if 'script' not in st.session_state:
     st.session_state.script = None
-
 
 # --- Step 1: Define Creator Profile ---
 st.header("Step 1: Define Your Content Strategy")
 with st.container(border=True):
     col1, col2 = st.columns(2)
     with col1:
-        niche = st.text_input("Enter your niche:", "Sustainable living for city dwellers")
-        audience = st.text_input("Describe your target audience:", "Young professionals aged 25-35")
+        niche = st.text_input("Enter your niche:", "Home workout for beginners")
+        audience = st.text_input("Describe your target audience:", "People in their 20s and 30s looking to get fit")
     with col2:
-        tone = st.selectbox("Select your tone:", ["Educational", "Humorous", "Inspirational", "Sarcastic", "Emotional"])
-        persona = st.text_area("Optional: Describe your creator persona:", "A friendly, slightly nerdy guide who makes sustainability feel easy and accessible, not preachy.")
-
+        tone = st.selectbox("Select your tone:", ["Inspirational", "Educational", "Humorous", "Motivational"])
+        persona = st.text_area("Optional: Describe your creator persona:", "A friendly and encouraging fitness coach who makes exercise fun and accessible.")
 
 # --- Step 2: Generate Ideas ---
 st.header("Step 2: Generate Content Ideas")
 with st.container(border=True):
-    # The trend toggle is removed for simplicity in this new model
     if st.button("✨ Generate Ideas & Find References", type="primary"):
         with st.spinner("Brainstorming and searching for references..."):
-            # Note the function call has changed
             st.session_state.ideas_with_links = st.session_state.chatbot.generate_ideas_with_links(niche, tone, audience)
             st.session_state.selected_idea = None
             st.session_state.script = None
 
-# In streamlit_app.py, find and replace this entire 'if' block
-
-if 'ideas_with_links' in st.session_state and st.session_state.ideas_with_links:
+if st.session_state.ideas_with_links:
     st.subheader("Your Generated Ideas & References:")
     for i, item in enumerate(st.session_state.ideas_with_links):
         st.markdown(f"**Idea {i+1}: {item['idea']}**")
-
-        # Create separate expanders for each link category
+        
         with st.expander("📄 Show Web Article References"):
             if item['links']['articles']:
                 for link in item['links']['articles']:
@@ -71,7 +64,7 @@ if 'ideas_with_links' in st.session_state and st.session_state.ideas_with_links:
                     st.markdown(f"- [{link['title']}]({link['link']})")
             else:
                 st.write("No YouTube Shorts found.")
-
+        
         with st.expander("📸 Show Instagram Reels Inspiration"):
             if item['links']['instagram']:
                 for link in item['links']['instagram']:
@@ -91,30 +84,43 @@ if st.session_state.selected_idea:
         st.subheader("Generate a Script")
         platform = st.selectbox("Select a platform for the script:", ["Instagram Reel", "TikTok", "YouTube Short"])
         
-        if st.button("📝 Generate Script", type="primary"):
-            with st.spinner(f"Writing a script for {platform}..."):
+        if st.button("📝 Generate AI Script", type="primary"):
+            with st.spinner(f"Writing a high-quality script with AI..."):
                 st.session_state.script = st.session_state.chatbot.generate_script(st.session_state.selected_idea, platform, persona)
 
-        if st.session_state.script and "error" not in st.session_state.script:
-            st.markdown(f"**Hook:** {st.session_state.script.get('hook', 'N/A')}")
-            st.text_area("Script:", value=st.session_state.script.get('script', 'N/A'), height=150)
-            st.markdown(f"**Call to Action:** {st.session_state.script.get('cta', 'N/A')}")
+        if st.session_state.script:
+            if "error" in st.session_state.script:
+                st.error(st.session_state.script['error'])
+            else:
+                st.markdown("#### 🎣 Hook")
+                st.info(st.session_state.script.get('hook', 'N/A'))
 
-            # --- Step 4: Cross-Post ---
-            st.subheader("Repurpose This Content")
-            target_platforms = st.multiselect(
-                "Select platforms to repurpose for:",
-                ["LinkedIn Post", "Twitter Thread", "Facebook Post", "Blog Post Snippet"],
-                default=["LinkedIn Post", "Twitter Thread"]
-            )
-            if st.button("🚀 Repurpose Content", type="primary"):
-                with st.spinner("Adapting content for other platforms..."):
-                    repurposed = st.session_state.chatbot.repurpose_content(
-                        st.session_state.script['script'],
-                        platform,
-                        target_platforms
-                    )
-                    for p, content in repurposed.items():
-                        st.text_area(f"Generated {p}:", value=content, height=200)
+                st.markdown("#### 📜 Script")
+                st.text_area("Script Body", value=st.session_state.script.get('script', 'N/A'), height=200)
 
+                st.markdown("#### 📣 Call to Action")
+                st.info(st.session_state.script.get('cta', 'N/A'))
+                
+                st.markdown("#### #️⃣ Hashtags")
+                st.success(st.session_state.script.get('hashtags', 'N/A'))
+
+            # --- Step 4: Cross-Post (with safety check) ---
+            # This block now checks if a valid script exists before showing the button.
+            if st.session_state.script and 'script' in st.session_state.script:
+                st.subheader("Repurpose This Content")
+                target_platforms = st.multiselect(
+                    "Select platforms to repurpose for:",
+                    ["LinkedIn Post", "Twitter Thread", "Facebook Post"],
+                    default=["LinkedIn Post", "Twitter Thread"]
+                )
+                if st.button("🚀 Repurpose Content", type="primary"):
+                    with st.spinner("Adapting content for other platforms..."):
+                        script_body_for_repurpose = st.session_state.script.get('script', '')
+                        repurposed = st.session_state.chatbot.repurpose_content(
+                            script_body_for_repurpose,
+                            platform,
+                            target_platforms
+                        )
+                        for p, content in repurposed.items():
+                            st.text_area(f"Generated {p}:", value=content, height=200)
 
