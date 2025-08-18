@@ -55,19 +55,23 @@ if st.session_state.content_plan:
         with st.container(border=True):
             st.markdown(f"**Idea {i+1}: {item['idea']}**")
 
-            # --- Mood Board ---
             if item['images']:
                 st.markdown("##### Visual Mood Board")
                 st.image(item['images'], width=150)
 
-            # --- References ---
             with st.expander("Show Research & References"):
                 st.markdown("**Articles:**")
                 for link in item['links']['articles']: st.markdown(f"- [{link['title']}]({link['link']})")
+                
                 st.markdown("**YouTube Inspiration:**")
                 for link in item['links']['youtube']: st.markdown(f"- [{link['title']}]({link['link']})")
+                
                 st.markdown("**Instagram Inspiration:**")
                 for link in item['links']['instagram']: st.markdown(f"- [{link['title']}]({link['link']})")
+                
+                # --- Reddit Section Included ---
+                st.markdown("**Reddit Discussions:**")
+                for link in item['links']['reddit']: st.markdown(f"- [{link['title']}]({link['link']})")
 
             if st.button(f"Develop Script for Idea {i+1}", key=f"idea_{i}"):
                 st.session_state.selected_idea = item['idea']
@@ -90,7 +94,6 @@ if st.session_state.selected_idea:
                 st.markdown("#### 🎣 Hook")
                 st.info(st.session_state.script.get('hook', 'N/A'))
                 
-                # --- Hook Analyzer ---
                 if st.button("🧠 Analyze & Enhance Hook"):
                     with st.spinner("AI is analyzing your hook..."):
                         st.session_state.hook_analysis = st.session_state.chatbot.analyze_hook(st.session_state.script.get('hook'))
@@ -112,8 +115,21 @@ if st.session_state.selected_idea:
                 st.markdown("#### #️⃣ Hashtags")
                 st.success(st.session_state.script.get('hashtags', 'N/A'))
                 
-                # --- Repurposing ---
-                if 'script' in st.session_state.script:
+                if 'script' in st.session_state.script and st.session_state.script.get('script'):
                     st.subheader("Step 4: Repurpose This Content")
-                    # (Repurposing logic remains the same)
+                    target_platforms = st.multiselect(
+                        "Select platforms to repurpose for:",
+                        ["LinkedIn Post", "Twitter Thread", "Facebook Post"],
+                        default=["LinkedIn Post", "Twitter Thread"]
+                    )
+                    if st.button("🚀 Repurpose Content", type="primary"):
+                        with st.spinner("Adapting content for other platforms..."):
+                            script_body_for_repurpose = st.session_state.script.get('script', '')
+                            repurposed = st.session_state.chatbot.repurpose_content(
+                                script_body_for_repurpose,
+                                "Instagram Reel",
+                                target_platforms
+                            )
+                            for p, content in repurposed.items():
+                                st.text_area(f"Generated {p}:", value=content, height=200)
 

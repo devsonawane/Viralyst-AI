@@ -5,7 +5,6 @@ import google.generativeai as genai
 
 def perform_search(api_key, query, num_results=2):
     """Helper function to perform a Google search."""
-    # (This function remains the same as before)
     try:
         params = {"q": query, "api_key": api_key, "num": num_results}
         search = GoogleSearch(params)
@@ -17,7 +16,7 @@ def perform_search(api_key, query, num_results=2):
         return []
 
 def get_mood_board_images(api_key, query, num_images=3):
-    """Fetches images from Pexels to create a visual mood board."""
+    """Fetches images from Pexels."""
     try:
         api = API(api_key)
         api.search(query, page=1, results_per_page=num_images)
@@ -33,7 +32,6 @@ def generate_plan_with_visuals(search_api_key, pexels_api_key, niche, tone, audi
     """
     print(f"--- Generating a {plan_type} for niche: {niche} ---")
     
-    # 1. Generate ideas using Gemini AI for higher quality
     model = genai.GenerativeModel('gemini-1.5-flash')
     num_ideas = 3 if plan_type == 'Single Idea' else 5
     prompt = f"""
@@ -51,21 +49,26 @@ def generate_plan_with_visuals(search_api_key, pexels_api_key, niche, tone, audi
     
     results = []
     
-    # 2. For each idea, get links and mood board images
     for idea in ideas:
         print(f"--- Researching idea: '{idea}' ---")
         
-        # Use a simplified query for better image results
-        image_query = f"{niche} {tone}"
-        
+        # --- NEW: AI-Powered Keyword Generation ---
+        keyword_prompt = f"Based on the content idea '{idea}', generate 3 short, effective search keywords. Provide only the keywords, separated by commas."
+        keyword_response = model.generate_content(keyword_prompt)
+        keywords = [k.strip() for k in keyword_response.text.split(',')]
+        primary_keyword = keywords[0] if keywords else idea # Use the first keyword for best results
+        print(f"--- Generated Keywords for Search: {keywords} ---")
+        # -----------------------------------------
+
         results.append({
             "idea": idea,
             "links": {
-                "articles": perform_search(search_api_key, idea),
-                "youtube": perform_search(search_api_key, f"site:youtube.com {idea} shorts"),
-                "instagram": perform_search(search_api_key, f"site:instagram.com reel {idea}")
+                "articles": perform_search(search_api_key, primary_keyword),
+                "youtube": perform_search(search_api_key, f"site:youtube.com {primary_keyword} shorts tutorial"),
+                "instagram": perform_search(search_api_key, f"site:instagram.com reel {primary_keyword}"),
+                "reddit": perform_search(search_api_key, f"site:reddit.com {primary_keyword} tips discussion") # New Reddit Search
             },
-            "images": get_mood_board_images(pexels_api_key, image_query)
+            "images": get_mood_board_images(pexels_api_key, primary_keyword)
         })
             
     return results

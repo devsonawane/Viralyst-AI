@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv
 from generators import idea_generator, script_generator
+from crossposting import repurposer  # <-- THIS LINE WAS MISSING
 import google.generativeai as genai
 
 load_dotenv()
@@ -59,4 +60,5 @@ class Chatbot:
 
     def repurpose_content(self, script, original_platform, target_platforms):
         return repurposer.repurpose(script, original_platform, target_platforms)
+
 
