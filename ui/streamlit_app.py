@@ -7,20 +7,38 @@ from app.chatbot import Chatbot
 
 st.set_page_config(page_title="AI Content Strategy Suite", layout="wide")
 
+# --- Initialize Chatbot and State ---
+if 'chatbot' not in st.session_state:
+    st.session_state.chatbot = Chatbot()
 # Initialize all necessary state variables
-if 'chatbot' not in st.session_state: st.session_state.chatbot = Chatbot()
-if 'content_plan' not in st.session_state: st.session_state.content_plan = []
-if 'selected_idea' not in st.session_state: st.session_state.selected_idea = None
-if 'script' not in st.session_state: st.session_state.script = None
-if 'hook_analysis' not in st.session_state: st.session_state.hook_analysis = None
-if 'calendar_result' not in st.session_state: st.session_state.calendar_result = None
-if 'analysis_result' not in st.session_state: st.session_state.analysis_result = None
-if 'localized_result' not in st.session_state: st.session_state.localized_result = None
-if 'trend_result' not in st.session_state: st.session_state.trend_result = None
+if 'content_plan' not in st.session_state:
+    st.session_state.content_plan = []
+if 'selected_idea' not in st.session_state:
+    st.session_state.selected_idea = None
+if 'script' not in st.session_state:
+    st.session_state.script = None
+if 'hook_analysis' not in st.session_state:
+    st.session_state.hook_analysis = None
+if 'calendar_result' not in st.session_state:
+    st.session_state.calendar_result = None
+if 'analysis_result' not in st.session_state:
+    st.session_state.analysis_result = None
+if 'localized_result' not in st.session_state:
+    st.session_state.localized_result = None
+if 'trend_result' not in st.session_state:
+    st.session_state.trend_result = None
+# New state for integrated features
+if 'integrated_calendar' not in st.session_state:
+    st.session_state.integrated_calendar = None
+if 'integrated_localized' not in st.session_state:
+    st.session_state.integrated_localized = None
 
+
+# --- UI Layout ---
 st.title("🤖 AI Content Strategy Suite")
 st.markdown("Generate strategic plans, analyze viral hits, create multilingual content, and predict future trends.")
 
+# --- Tabbed Interface ---
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "💡 Idea & Script Generator", 
     "🗓️ Content Calendar", 
@@ -29,29 +47,39 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "🔮 Future Trends"
 ])
 
+# --- TAB 1: Idea & Script Generator ---
 with tab1:
     st.header("Generate a Content Plan")
+    
     with st.expander("Step 1: Define Your Content Strategy", expanded=True):
         col1, col2 = st.columns(2)
         with col1:
             niche = st.text_input("Enter your niche:", "Personal finance for millennials", key="niche_tab1")
             audience = st.text_input("Describe your target audience:", "25-35 year olds saving for major life goals", key="audience_tab1")
         with col2:
-            tone = st.selectbox("Select your tone:", ["Authoritative", "Relatable", "Humorous", "Inspirational"], key="tone_tab1")
+            tone_options = ["Authoritative", "Relatable", "Humorous", "Inspirational", "Sarcastic", "Empathetic", "Professional", "Casual"]
+            tone = st.selectbox("Select your tone:", tone_options, key="tone_tab1")
             persona = st.text_area("Optional: Describe your creator persona:", "A friendly financial advisor who breaks down complex topics simply.", key="persona_tab1")
 
     st.header("Step 2: Generate Your Content Plan")
     with st.container(border=True):
         plan_type = st.radio("Select Plan Type:", ("Single Idea", "3-Part Content Series"), horizontal=True, key="plan_type_tab1")
+        
         if st.button("✨ Generate Plan", type="primary", key="generate_plan_tab1"):
             with st.spinner(f"Generating a {plan_type} with visuals..."):
                 st.session_state.content_plan = st.session_state.chatbot.generate_content_plan(niche, tone, audience, plan_type)
                 st.session_state.selected_idea = None
                 st.session_state.script = None
                 st.session_state.hook_analysis = None
+                st.session_state.integrated_calendar = None
+                st.session_state.integrated_localized = None
 
     if st.session_state.content_plan:
-        st.subheader("Your Generated Ideas:")
+        if plan_type == "3-Part Content Series":
+            st.subheader("Your 3-Part Content Series Plan:")
+        else:
+            st.subheader("Your Generated Idea:")
+
         for i, item in enumerate(st.session_state.content_plan):
             with st.container(border=True):
                 st.markdown(f"**Idea {i+1}: {item.get('idea', 'Error: Could not load idea.')}**")
@@ -63,18 +91,10 @@ with tab1:
                         st.image(item['images'], width=150)
                     with st.expander("Show Research & References"):
                         links = item.get('links', {})
-                        st.markdown("**Articles:**")
-                        for l in links.get('articles', []):
-                            st.markdown(f"- [{l.get('title')}]({l.get('link')})")
-                        st.markdown("**YouTube Inspiration:**")
-                        for l in links.get('youtube', []):
-                            st.markdown(f"- [{l.get('title')}]({l.get('link')})")
-                        st.markdown("**Instagram Inspiration:**")
-                        for l in links.get('instagram', []):
-                            st.markdown(f"- [{l.get('title')}]({l.get('link')})")
-                        st.markdown("**Reddit Discussions:**")
-                        for l in links.get('reddit', []):
-                            st.markdown(f"- [{l.get('title')}]({l.get('link')})")
+                        st.markdown("**Articles:**"); [st.markdown(f"- [{l.get('title')}]({l.get('link')})") for l in links.get('articles', [])]
+                        st.markdown("**YouTube Inspiration:**"); [st.markdown(f"- [{l.get('title')}]({l.get('link')})") for l in links.get('youtube', [])]
+                        st.markdown("**Instagram Inspiration:**"); [st.markdown(f"- [{l.get('title')}]({l.get('link')})") for l in links.get('instagram', [])]
+                        st.markdown("**Reddit Discussions:**"); [st.markdown(f"- [{l.get('title')}]({l.get('link')})") for l in links.get('reddit', [])]
                     if st.button(f"Develop Script for Idea {i+1}", key=f"idea_{i}"):
                         st.session_state.selected_idea = item.get('idea')
                         st.session_state.script = None
@@ -99,9 +119,7 @@ with tab1:
                         else:
                             st.metric("Virality Score", st.session_state.hook_analysis.get('score', 'N/A'))
                             st.markdown("**Feedback:**"); st.write(st.session_state.hook_analysis.get('feedback', 'N/A'))
-                            st.markdown("**Suggested Alternatives:**")
-                            for alt in st.session_state.hook_analysis.get('alternatives', []):
-                                st.success(alt)
+                            st.markdown("**Suggested Alternatives:**"); [st.success(alt) for alt in st.session_state.hook_analysis.get('alternatives', [])]
                     st.markdown("---")
                     st.markdown("#### 📜 Script"); st.text_area("Script Body", value=st.session_state.script.get('script', 'N/A'), height=200)
                     st.markdown("#### #️⃣ Hashtags"); st.success(st.session_state.script.get('hashtags', 'N/A'))
@@ -112,6 +130,37 @@ with tab1:
                             with st.spinner("Adapting content..."):
                                 repurposed = st.session_state.chatbot.repurpose_content(st.session_state.script.get('script', ''), "Instagram Reel", target_platforms)
                                 for p, content in repurposed.items(): st.text_area(f"Generated {p}:", value=content, height=200)
+
+    st.header("Advanced Generation Tools")
+    with st.container(border=True):
+        st.markdown("Use the niche and audience from Step 1 to generate more specific content.")
+        st.subheader("🗓️ Generate a 7-Day Calendar")
+        if st.button("Generate Calendar from above Niche"):
+            with st.spinner("Building your strategic content calendar..."):
+                st.session_state.integrated_calendar = st.session_state.chatbot.generate_content_calendar(niche, audience)
+        if 'integrated_calendar' in st.session_state and st.session_state.integrated_calendar:
+            result = st.session_state.integrated_calendar
+            if "error" in result: st.error(result['error'])
+            else:
+                st.markdown(result['plan_text'])
+                st.download_button(label="📥 Download Plan as CSV", data=result['csv_data'], file_name="content_calendar.csv", mime="text/csv")
+
+        st.markdown("---")
+        st.subheader("🌍 Generate Localized Ideas")
+        col1, col2 = st.columns(2)
+        with col1:
+            lang_options = ["English", "Marathi", "Spanish", "French", "German", "Hindi", "Japanese", "Portuguese"]
+            integrated_lang = st.selectbox("Select Language:", lang_options, key="integ_lang")
+        with col2:
+            integrated_region = st.text_input("Enter Target Region (e.g., India, USA):", key="integ_region")
+        if st.button("Generate Localized Ideas from above Niche"):
+            with st.spinner(f"Generating ideas in {integrated_lang} for {integrated_region}..."):
+                st.session_state.integrated_localized = st.session_state.chatbot.generate_localized_ideas(niche, audience, tone, integrated_lang, integrated_region)
+        if 'integrated_localized' in st.session_state and st.session_state.integrated_localized:
+            result = st.session_state.integrated_localized
+            if "error" in result: st.error(result['error'])
+            else:
+                st.info(result['ideas_text'])
 
 with tab2:
     st.header("Strategic Content Calendar Generator")
@@ -157,7 +206,8 @@ with tab4:
     with st.container(border=True):
         col1, col2 = st.columns(2)
         with col1:
-            loc_lang = st.selectbox("Select Target Language:", ["Spanish", "French", "German", "Hindi", "Japanese", "Portuguese"])
+            lang_options_tab4 = ["English", "Marathi", "Spanish", "French", "German", "Hindi", "Japanese", "Portuguese"]
+            loc_lang = st.selectbox("Select Target Language:", lang_options_tab4)
             loc_niche = st.text_input("Enter your niche:", key="loc_niche")
             loc_tone = st.text_input("Enter your desired tone:", key="loc_tone")
         with col2:
@@ -171,13 +221,14 @@ with tab4:
                 st.warning("Please fill in all fields.")
     if 'localized_result' in st.session_state and st.session_state.localized_result:
         result = st.session_state.localized_result
-        if "error" in result: st.error(result['error'])
+        if "error" in result:
+            st.error(result['error'])
         else:
             st.markdown("### Your Localized Content Ideas:")
             st.info(result['ideas_text'])
 
 with tab5:
-    st.header("The Trend Oracle 🔮")
+    st.header("The Trend Oracle �")
     st.markdown("Get a playful but insightful prediction of a future viral trend in your niche.")
     with st.container(border=True):
         trend_niche = st.text_input("Enter your niche to get a trend prediction:", key="trend_niche")
@@ -189,7 +240,8 @@ with tab5:
                 st.warning("Please enter a niche.")
     if 'trend_result' in st.session_state and st.session_state.trend_result:
         result = st.session_state.trend_result
-        if "error" in result: st.error(result['error'])
+        if "error" in result:
+            st.error(result['error'])
         else:
             st.markdown("### The Oracle Has Spoken:")
             st.success(result['prediction_text'])
