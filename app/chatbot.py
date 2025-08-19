@@ -1,6 +1,6 @@
 import os
 from dotenv import load_dotenv
-from generators import idea_generator, script_generator, calendar_generator, analyzer_generator, localization_generator, trend_predictor
+from generators import idea_generator, script_generator, calendar_generator, analyzer_generator, localization_generator, trend_predictor, reverse_virality_generator, feedback_loop_generator, enhancer_generator
 from crossposting import repurposer
 import google.generativeai as genai
 
@@ -14,7 +14,13 @@ class Chatbot:
         self.search_api_key = os.getenv("SERPAPI_API_KEY")
         self.pexels_api_key = os.getenv("PEXELS_API_KEY")
 
-    def generate_content_plan(self, niche, tone, audience, plan_type):
+    # --- NEW: Suggestion Function ---
+    def get_suggestions(self, input_text, suggestion_type):
+        if not self.gemini_api_key: return {"error": "Gemini API Key not configured."}
+        return enhancer_generator.get_suggestions(input_text, suggestion_type)
+
+    # --- UPDATED: Content Plan Function ---
+    def generate_content_plan(self, niche, tone, audience, plan_type, platform):
         if not self.search_api_key or not self.pexels_api_key:
             return [{"idea": "ERROR: Search or Pexels API Key is not configured.", "links": {}, "images": []}]
         return idea_generator.generate_plan_with_visuals(
@@ -23,9 +29,11 @@ class Chatbot:
             niche=niche,
             tone=tone,
             audience=audience,
-            plan_type=plan_type
+            plan_type=plan_type,
+            platform=platform # Pass the new platform argument
         )
 
+    # --- Other functions remain the same ---
     def generate_script(self, idea, platform, persona=None):
         if not self.gemini_api_key: return {"error": "Gemini API Key not configured."}
         return script_generator.generate_with_ai(idea, platform, persona)
@@ -52,4 +60,12 @@ class Chatbot:
     def predict_future_trend(self, niche):
         if not self.gemini_api_key: return {"error": "Gemini API Key not configured."}
         return trend_predictor.predict_trend(niche)
+
+    def reverse_virality(self, viral_url, user_niche):
+        if not self.gemini_api_key: return {"error": "Gemini API Key not configured."}
+        return reverse_virality_generator.reverse_engineer_and_remix(viral_url, user_niche)
+
+    def get_adaptive_feedback(self, post_url):
+        if not self.gemini_api_key: return {"error": "Gemini API Key not configured."}
+        return feedback_loop_generator.analyze_performance_and_suggest(post_url)
 

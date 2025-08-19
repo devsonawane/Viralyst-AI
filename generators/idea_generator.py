@@ -27,14 +27,46 @@ def get_mood_board_images(api_key, query, num_images=3):
         print(f"--- ERROR during Pexels API call for '{query}': {e} ---")
         return []
 
-def generate_plan_with_visuals(search_api_key, pexels_api_key, niche, tone, audience, plan_type):
+def generate_plan_with_visuals(search_api_key, pexels_api_key, niche, tone, audience, plan_type, platform):
     """
-    Generates ideas/series, finds links, and creates a mood board.
+    Generates ideas/series, finds links, and creates a mood board, tailored to a specific platform.
     """
     try:
         model = genai.GenerativeModel('gemini-1.5-flash')
-        num_ideas = 3 if plan_type == 'Single Idea' else 5
-        prompt = f"Brainstorm a list of {num_ideas} engaging content ideas for a creator. Niche: {niche}, Audience: {audience}, Tone: {tone}. Provide only a numbered list."
+        
+        # Determine the number of ideas based on the plan type
+        if plan_type == 'Single Idea':
+            num_ideas = 1
+        elif plan_type == '3-Part Content Series':
+            num_ideas = 3
+        elif plan_type == 'Monthly Content Theme':
+            num_ideas = 5 # For monthly themes, we'll generate 5 content pillars
+        
+        # Create a dynamic prompt based on the plan type and platform
+        if plan_type == "Monthly Content Theme":
+            prompt = f"""
+            You are a master content strategist. Brainstorm 5 high-level content pillars for a month-long content theme.
+            The ideas should be suitable for the platform: {platform}.
+
+            **Niche:** {niche}
+            **Audience:** {audience}
+            **Tone:** {tone}
+
+            Provide only a numbered list of the 5 content pillars.
+            """
+        else:
+            prompt = f"""
+            You are a creative strategist. Brainstorm a list of {num_ideas} engaging content ideas for a creator.
+            The ideas must be specifically tailored for the platform: {platform}.
+            If the request is for a 'Content Series', the ideas must build on each other logically.
+            
+            **Niche:** {niche}
+            **Audience:** {audience}
+            **Tone:** {tone}
+
+            Provide only a numbered list of the ideas.
+            """
+        
         response = model.generate_content(prompt)
         ideas = [line.strip().lstrip('0123456789.-* ') for line in response.text.split('\n') if line.strip()]
         

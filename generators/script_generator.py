@@ -3,19 +3,22 @@ import re
 
 def generate_with_ai(idea, platform, persona=None):
     """
-    Generates a high-quality script and hashtags using the Gemini AI model.
+    Generates a high-quality script, hashtags, AND trending audio suggestions.
     """
     script_details = {
         'hook': 'Could not parse hook.',
         'script': 'Could not parse script.',
         'cta': 'Could not parse CTA.',
-        'hashtags': 'Could not parse hashtags.'
+        'hashtags': 'Could not parse hashtags.',
+        'audio': 'Could not parse audio suggestions.' # New field
     }
     try:
-        print(f"--- Generating AI script for idea: '{idea}' ---")
         model = genai.GenerativeModel('gemini-1.5-flash')
+        
+        # --- PROMPT UPDATE ---
+        # Added a new section for Audio Suggestions
         prompt = f"""
-        You are an expert social media scriptwriter for viral short-form videos.
+        You are an expert social media scriptwriter and a viral trend spotter.
         Your task is to create a complete script package for the following content idea.
 
         **Video Idea:** "{idea}"
@@ -23,15 +26,18 @@ def generate_with_ai(idea, platform, persona=None):
         **Creator Persona:** "{persona if persona else 'An engaging and knowledgeable creator'}"
 
         Please generate the following, with each section clearly labeled on a new line:
-        **HOOK:**
-        **SCRIPT:**
-        **CTA:**
-        **HASHTAGS:**
+        **HOOK:** (A single, powerful sentence)
+        **SCRIPT:** (A detailed, 3-part script with visual cues)
+        **CTA:** (An engaging question or directive)
+        **HASHTAGS:** (A list of 5-7 relevant hashtags)
+        **AUDIO:** (Suggest 2-3 trending audio ideas. For each, describe the VIBE (e.g., Upbeat, Nostalgic), the GENRE (e.g., Lofi Hip-Hop, Pop), and give an EXAMPLE of a real, popular song that fits.)
         """
         response = model.generate_content(prompt)
         generated_text = response.text
         
-        parts = re.split(r'\*\*(HOOK:|SCRIPT:|CTA:|HASHTAGS:)\*\*', generated_text, flags=re.IGNORECASE)
+        # --- PARSING UPDATE ---
+        # Added 'audio' to the parsing logic
+        parts = re.split(r'\*\*(HOOK:|SCRIPT:|CTA:|HASHTAGS:|AUDIO:)\*\*', generated_text, flags=re.IGNORECASE)
         if len(parts) > 1:
             i = 1
             while i < len(parts):
@@ -41,10 +47,10 @@ def generate_with_ai(idea, platform, persona=None):
                 elif label == 'script': script_details['script'] = content
                 elif label == 'cta': script_details['cta'] = content
                 elif label == 'hashtags': script_details['hashtags'] = content
+                elif label == 'audio': script_details['audio'] = content # New parsing
                 i += 2
         return script_details
     except Exception as e:
-        print(f"--- ERROR during Gemini API call: {e} ---")
         script_details["error"] = f"An error occurred while generating the AI script: {e}"
         return script_details
 
