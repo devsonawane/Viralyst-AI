@@ -73,15 +73,7 @@ Install Docker.
 
 Build the Docker image:
 
-docker build -t viralyst-ai .
-
 Run the container with your API keys:
 You will need to provide three environment variables (-e) for your API keys from SerpApi, Google AI Studio, and Pexels.
-
-docker run -d -p 8501:8501 \
-  -e SERPAPI_API_KEY="<YOUR_SERPAPI_API_KEY>" \
-  -e GEMINI_API_KEY="<YOUR_GOOGLE_AI_KEY>" \
-  -e PEXELS_API_KEY="<YOUR_PEXELS_KEY>" \
-  viralyst-ai
 
 Access the application at http://<your-server-ip>:8501.
