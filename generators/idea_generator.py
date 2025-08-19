@@ -2,6 +2,7 @@ from serpapi import GoogleSearch
 from pexels_api import API
 import os
 import google.generativeai as genai
+import time
 
 def perform_search(api_key, query, num_results=2):
     """Helper function to perform a Google search."""
@@ -16,7 +17,7 @@ def perform_search(api_key, query, num_results=2):
         return []
 
 def get_mood_board_images(api_key, query, num_images=3):
-    """Fetches images from Pexels."""
+    """Fetches images from Pexels to create a visual mood board."""
     try:
         api = API(api_key)
         api.search(query, page=1, results_per_page=num_images)
@@ -30,44 +31,32 @@ def generate_plan_with_visuals(search_api_key, pexels_api_key, niche, tone, audi
     """
     Generates ideas/series, finds links, and creates a mood board.
     """
-    print(f"--- Generating a {plan_type} for niche: {niche} ---")
-    
-    model = genai.GenerativeModel('gemini-1.5-flash')
-    num_ideas = 3 if plan_type == 'Single Idea' else 5
-    prompt = f"""
-    You are a creative strategist. Brainstorm a list of {num_ideas} engaging content ideas for a creator.
-    If the request is for a 'Content Series', the ideas must build on each other logically.
-    
-    **Niche:** {niche}
-    **Audience:** {audience}
-    **Tone:** {tone}
-
-    Provide only a numbered list of the ideas.
-    """
-    response = model.generate_content(prompt)
-    ideas = [line.strip().lstrip('0123456789.-* ') for line in response.text.split('\n') if line.strip()]
-    
-    results = []
-    
-    for idea in ideas:
-        print(f"--- Researching idea: '{idea}' ---")
+    try:
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        num_ideas = 3 if plan_type == 'Single Idea' else 5
+        prompt = f"Brainstorm a list of {num_ideas} engaging content ideas for a creator. Niche: {niche}, Audience: {audience}, Tone: {tone}. Provide only a numbered list."
+        response = model.generate_content(prompt)
+        ideas = [line.strip().lstrip('0123456789.-* ') for line in response.text.split('\n') if line.strip()]
         
-        keyword_prompt = f"Based on the content idea '{idea}', generate 3 short, effective search keywords. Provide only the keywords, separated by commas."
-        keyword_response = model.generate_content(keyword_prompt)
-        keywords = [k.strip() for k in keyword_response.text.split(',')]
-        primary_keyword = keywords[0] if keywords else idea
-        print(f"--- Generated Keywords for Search: {keywords} ---")
-
-        results.append({
-            "idea": idea,
-            "links": {
-                "articles": perform_search(search_api_key, primary_keyword),
-                "youtube": perform_search(search_api_key, f"site:youtube.com {primary_keyword} shorts tutorial"),
-                "instagram": perform_search(search_api_key, f"site:instagram.com reel {primary_keyword}"),
-                "reddit": perform_search(search_api_key, f"site:reddit.com {primary_keyword} tips discussion")
-            },
-            "images": get_mood_board_images(pexels_api_key, primary_keyword)
-        })
+        results = []
+        for idea in ideas:
+            time.sleep(1) # Crucial delay to prevent rate limiting
+            keyword_prompt = f"Based on the idea '{idea}', generate 3 short search keywords. Provide only keywords, separated by commas."
+            keyword_response = model.generate_content(keyword_prompt)
+            keywords = [k.strip() for k in keyword_response.text.split(',')]
+            primary_keyword = keywords[0] if keywords else idea
             
-    return results
+            results.append({
+                "idea": idea,
+                "links": {
+                    "articles": perform_search(search_api_key, primary_keyword),
+                    "youtube": perform_search(search_api_key, f"site:youtube.com {primary_keyword} shorts"),
+                    "instagram": perform_search(search_api_key, f"site:instagram.com reel {primary_keyword}"),
+                    "reddit": perform_search(search_api_key, f"site:reddit.com {primary_keyword} discussion")
+                },
+                "images": get_mood_board_images(pexels_api_key, primary_keyword)
+            })
+        return results
+    except Exception as e:
+        return [{"idea": f"An AI API error occurred: {e}", "links": {}, "images": []}]
 

@@ -1,43 +1,55 @@
-🤖 AI Content Strategy Suite
-This project has evolved from a simple chatbot into a comprehensive, AI-powered suite for content creators. It goes beyond basic idea generation to provide strategic planning, competitive analysis, and content enhancement tools. Built with a Python backend, a Streamlit UI, and powerful external APIs, this tool is designed to be a creator's indispensable partner.
+🚀 Viralyst AI: The AI Content Strategy Suite
+Viralyst AI is an all-in-one strategic tool designed to empower content creators and brands. It moves beyond simple idea generation to offer a comprehensive suite of AI-powered features, from planning a full week of content to reverse-engineering viral hits and creating culturally-aware multilingual campaigns.
 
-✨ Core Features
-This application is now a multi-faceted tool with three main modules:
+This application was built with Python, Streamlit, and a suite of powerful external APIs to deliver a fast, reliable, and feature-rich experience.
+
+✨ Features
+Viralyst AI is organized into five powerful modules:
 
 💡 1. Idea & Script Generator
-AI-Powered Idea Generation: Creates unique, high-quality ideas based on your niche, audience, and tone.
+The core engine for daily content creation.
 
-Content Series Planner: Generates a cohesive 3-part or 5-part content series to build a narrative and retain your audience.
+AI-Powered Ideation: Generates unique ideas or full content series based on your niche, audience, and tone.
 
-Comprehensive Research: For each idea, it automatically finds relevant:
+Deep Research: For each idea, it automatically finds relevant web articles, YouTube Shorts, Instagram Reels, and Reddit discussions.
 
-📄 Web Articles
+Visual Mood Boards: Instantly creates a visual mood board with high-quality images from Pexels to guide your creative direction.
 
-▶️ YouTube Shorts
+Advanced Scriptwriting: Produces a complete script package, including a hook, a detailed script body, a call-to-action, and optimized hashtags.
 
-📸 Instagram Reels
-
-💬 Reddit Discussions
-
-Visual Mood Boards: Fetches images from Pexels to provide instant visual inspiration for your content.
-
-Advanced Scriptwriting: Generates a complete script package including a hook, a detailed script body, a call-to-action, and relevant hashtags.
-
-Viral Hook Analyzer: A unique tool that provides an AI-generated "Virality Score" and actionable feedback to make your hooks more powerful.
+Viral Hook Analyzer: An industry-first tool that provides an AI-generated "Virality Score" and actionable feedback to make your hooks irresistible.
 
 🗓️ 2. Content Calendar Generator
-Strategic Planning: Generates a full 7-day content plan using the AIDA (Awareness, Interest, Desire, Action) marketing framework.
+Your strategic planner for long-term consistency.
 
-Multi-Format Ideas: Suggests a mix of content formats (Reels, Threads, etc.) to keep your feed diverse.
+AIDA Framework: Generates a full 7-day content plan using the Awareness, Interest, Desire, Action marketing model.
 
-Exportable: Download your entire content calendar as a .csv file to import into Notion, Trello, or Google Sheets.
+Multi-Format Strategy: Suggests a mix of content formats (Reels, Threads, etc.) to keep your feed engaging and diverse.
+
+Exportable: Download your entire content calendar as a .csv file, ready to be imported into Notion, Trello, or Google Sheets.
 
 🔍 3. Viral Post Analyzer
-"Cheat Code" for Creators: Paste the URL of any successful article or post.
+Your personal "cheat code" for understanding what works.
+
+Reverse Engineering: Paste the URL of any successful article or post.
 
 Strategic Breakdown: The AI reverse engineers the content, identifying the hook style, psychological triggers, and core message.
 
 Actionable Remix Ideas: Provides concrete ideas on how you can adapt that successful format for your own niche.
+
+🌍 4. Multilingual Ideation
+Go global with culturally-aware content.
+
+Multi-Language Generation: Generate ideas in Spanish, French, German, Hindi, and more.
+
+Cultural Adaptation: The AI adapts the tone and includes local references and slang, making your content feel authentic to a specific region.
+
+🔮 5. Future Trend Predictor
+Get ahead of the curve.
+
+The Trend Oracle: A playful but insightful feature that predicts a plausible future viral trend for your niche.
+
+First-Mover Advantage: Provides a creative campaign idea to help you capitalize on the trend before it goes mainstream.
 
 ⚙️ Tech Stack
 Backend: Python
@@ -52,8 +64,8 @@ Visuals: Pexels API
 
 Deployment: Docker on AWS EC2
 
-🚀 Deployment
-The application is containerized with Docker for easy deployment.
+🚀 Getting Started
+The application is containerized with Docker for easy and reliable deployment.
 
 Clone the repository.
 
@@ -61,7 +73,7 @@ Install Docker.
 
 Build the Docker image:
 
-docker build -t content-chatbot .
+docker build -t viralyst-ai .
 
 Run the container with your API keys:
 You will need to provide three environment variables (-e) for your API keys from SerpApi, Google AI Studio, and Pexels.
@@ -70,6 +82,6 @@ docker run -d -p 8501:8501 \
   -e SERPAPI_API_KEY="<YOUR_SERPAPI_API_KEY>" \
   -e GEMINI_API_KEY="<YOUR_GOOGLE_AI_KEY>" \
   -e PEXELS_API_KEY="<YOUR_PEXELS_KEY>" \
-  content-chatbot
+  viralyst-ai
 
 Access the application at http://<your-server-ip>:8501.

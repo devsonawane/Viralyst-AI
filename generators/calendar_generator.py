@@ -1,3 +1,4 @@
+# generators/calendar_generator.py
 import google.generativeai as genai
 import pandas as pd
 import io
@@ -6,26 +7,26 @@ def generate_calendar(niche, audience):
     """
     Generates a 7-day content calendar using the AIDA framework.
     """
-    print(f"--- Generating content calendar for niche: {niche} ---")
-    model = genai.GenerativeModel('gemini-1.5-flash')
-    
-    prompt = f"""
-    You are a master content strategist. Your task is to create a 7-day content calendar for a creator.
-    The plan should strategically use the AIDA framework (Awareness, Interest, Desire, Action) to build momentum over the week.
-
-    **Creator's Niche:** {niche}
-    **Target Audience:** {audience}
-
-    Generate a plan for Day 1 to Day 7. For each day, provide:
-    - **Day:** (e.g., Day 1)
-    - **Theme:** (e.g., Awareness: The Biggest Myth)
-    - **Topic:** (A specific, engaging content idea)
-    - **Format:** (e.g., Instagram Reel, Twitter Thread, Blog Post)
-
-    Structure your response clearly for each day.
-    """
-    
     try:
+        print(f"--- Generating content calendar for niche: {niche} ---")
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        
+        prompt = f"""
+        You are a master content strategist. Your task is to create a 7-day content calendar for a creator.
+        The plan should strategically use the AIDA framework (Awareness, Interest, Desire, Action) to build momentum over the week.
+
+        **Creator's Niche:** {niche}
+        **Target Audience:** {audience}
+
+        Generate a plan for Day 1 to Day 7. For each day, provide:
+        - **Day:** (e.g., Day 1)
+        - **Theme:** (e.g., Awareness: The Biggest Myth)
+        - **Topic:** (A specific, engaging content idea)
+        - **Format:** (e.g., Instagram Reel, Twitter Thread, Blog Post)
+
+        Structure your response clearly for each day.
+        """
+        
         response = model.generate_content(prompt)
         
         # --- Create a downloadable CSV file ---
