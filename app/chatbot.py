@@ -14,12 +14,10 @@ class Chatbot:
         self.search_api_key = os.getenv("SERPAPI_API_KEY")
         self.pexels_api_key = os.getenv("PEXELS_API_KEY")
 
-    # --- NEW: Suggestion Function ---
     def get_suggestions(self, input_text, suggestion_type, niche=None):
         if not self.gemini_api_key: return {"error": "Gemini API Key not configured."}
         return enhancer_generator.get_suggestions(input_text, suggestion_type, niche=niche)
 
-    # --- UPDATED: Content Plan Function ---
     def generate_content_plan(self, niche, tone, audience, plan_type, platform, selected_persona=None):
         if not self.search_api_key or not self.pexels_api_key:
             return [{"idea": "ERROR: Search or Pexels API Key is not configured.", "links": {}, "images": []}]
@@ -34,12 +32,10 @@ class Chatbot:
             selected_persona=selected_persona
         )
 
-    # --- NEW: Localized Idea Expansion Function ---
     def expand_localized_idea(self, language, region, idea):
         if not self.gemini_api_key: return {"error": "Gemini API Key not configured."}
         return localization_generator.expand_localized_idea(language, region, idea)
 
-    # --- Other functions remain the same ---
     def generate_script(self, idea, platform, persona=None):
         if not self.gemini_api_key: return {"error": "Gemini API Key not configured."}
         return script_generator.generate_with_ai(idea, platform, persona)
@@ -74,4 +70,9 @@ class Chatbot:
     def get_adaptive_feedback(self, post_url):
         if not self.gemini_api_key: return {"error": "Gemini API Key not configured."}
         return feedback_loop_generator.analyze_performance_and_suggest(post_url)
+
+    # --- NEW: Hook Lab Function ---
+    def run_hook_lab(self, niche, tone):
+        if not self.gemini_api_key: return {"error": "Gemini API Key not configured."}
+        return script_generator.generate_hook_lab_analysis(niche, tone)
 

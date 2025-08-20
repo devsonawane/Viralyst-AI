@@ -43,6 +43,8 @@ if 'integrated_localized' not in st.session_state:
     st.session_state.integrated_localized = None
 if 'expanded_localized_idea' not in st.session_state:
     st.session_state.expanded_localized_idea = {}
+if 'hook_lab_result' not in st.session_state:
+    st.session_state.hook_lab_result = None
 
 # --- Callback functions to safely update widget state ---
 def update_text_input(widget_key, suggestion):
@@ -120,6 +122,7 @@ with main_tab:
                 st.session_state.content_plan = st.session_state.chatbot.generate_content_plan(niche, tone, audience, plan_type, platform, st.session_state.selected_persona)
                 st.session_state.selected_idea = None
                 st.session_state.script = None
+                st.session_state.hook_lab_result = None
 
     if st.session_state.content_plan:
         st.subheader("Your Generated Content Plan:")
@@ -135,24 +138,14 @@ with main_tab:
                         st.image(item['images'], width=150)
                     with st.expander("Show Research & References"):
                         links = item.get('links', {})
-                        # --- THIS IS THE FIX ---
-                        # Replaced list comprehensions with standard for loops for stability
-                        st.markdown("**Articles:**")
-                        for l in links.get('articles', []):
-                            st.markdown(f"- [{l.get('title')}]({l.get('link')})")
-                        st.markdown("**YouTube Inspiration:**")
-                        for l in links.get('youtube', []):
-                            st.markdown(f"- [{l.get('title')}]({l.get('link')})")
-                        st.markdown("**Instagram Inspiration:**")
-                        for l in links.get('instagram', []):
-                            st.markdown(f"- [{l.get('title')}]({l.get('link')})")
-                        st.markdown("**Reddit Discussions:**")
-                        for l in links.get('reddit', []):
-                            st.markdown(f"- [{l.get('title')}]({l.get('link')})")
+                        st.markdown("**Articles:**"); [st.markdown(f"- [{l.get('title')}]({l.get('link')})") for l in links.get('articles', [])]
+                        st.markdown("**YouTube Inspiration:**"); [st.markdown(f"- [{l.get('title')}]({l.get('link')})") for l in links.get('youtube', [])]
+                        st.markdown("**Instagram Inspiration:**"); [st.markdown(f"- [{l.get('title')}]({l.get('link')})") for l in links.get('instagram', [])]
+                        st.markdown("**Reddit Discussions:**"); [st.markdown(f"- [{l.get('title')}]({l.get('link')})") for l in links.get('reddit', [])]
                     if st.button(f"Develop Script for Idea {i+1}", key=f"idea_{i}"):
                         st.session_state.selected_idea = idea_text
                         st.session_state.script = None
-                        st.session_state.hook_analysis = None
+                        st.session_state.hook_lab_result = None
                         st.rerun()
 
     if st.session_state.selected_idea:
@@ -160,26 +153,32 @@ with main_tab:
         with st.container(border=True):
             if not st.session_state.script:
                 with st.spinner("Writing a high-quality script with AI..."):
-                    st.session_state.script = st.session_state.chatbot.generate_script(st.session_state.selected_idea, platform, st.session_state.selected_persona.get('profile') if st.session_state.selected_persona else persona)
+                    persona_context = st.session_state.selected_persona.get('profile') if st.session_state.selected_persona else None
+                    st.session_state.script = st.session_state.chatbot.generate_script(st.session_state.selected_idea, platform, persona_context)
             if st.session_state.script:
                 if "error" in st.session_state.script: st.error(st.session_state.script['error'])
                 else:
-                    st.markdown("#### 🎣 Hook"); st.info(st.session_state.script.get('hook', 'N/A'))
-                    if st.button("🧠 Analyze & Enhance Hook"):
-                        with st.spinner("AI is analyzing your hook..."):
-                            st.session_state.hook_analysis = st.session_state.chatbot.analyze_hook(st.session_state.script.get('hook'))
-                    if st.session_state.hook_analysis:
-                        if "error" in st.session_state.hook_analysis: st.warning(st.session_state.hook_analysis['error'])
-                        else:
-                            st.metric("Virality Score", st.session_state.hook_analysis.get('score', 'N/A'))
-                            st.markdown("**Feedback:**"); st.write(st.session_state.hook_analysis.get('feedback', 'N/A'))
-                            st.markdown("**Suggested Alternatives:**")
-                            for alt in st.session_state.hook_analysis.get('alternatives', []):
-                                st.success(alt)
+                    st.markdown("#### 📜 Your Generated Script");
+                    st.info(f"**Hook:** {st.session_state.script.get('hook', 'N/A')}")
+                    st.text_area("Script Body", value=st.session_state.script.get('script', 'N/A'), height=200)
+                    st.success(f"**Hashtags:** {st.session_state.script.get('hashtags', 'N/A')}")
+                    st.info(f"**Audio Suggestions:** {st.session_state.script.get('audio', 'N/A')}")
                     st.markdown("---")
-                    st.markdown("#### 📜 Script"); st.text_area("Script Body", value=st.session_state.script.get('script', 'N/A'), height=200)
-                    st.markdown("#### #️⃣ Hashtags"); st.success(st.session_state.script.get('hashtags', 'N/A'))
-                    st.markdown("#### 🎵 Trending Audio Suggestions"); st.info(st.session_state.script.get('audio', 'No audio suggestions available.'))
+                    
+                    st.subheader("🧪 The Hook Lab")
+                    st.markdown("Generate and analyze multiple hook styles to find the perfect opener.")
+                    if st.button("🔬 Run Hook Lab Analysis", key="run_hook_lab"):
+                        with st.spinner("AI is running a full analysis of potential hooks..."):
+                            st.session_state.hook_lab_result = st.session_state.chatbot.run_hook_lab(niche, tone)
+                    
+                    if 'hook_lab_result' in st.session_state and st.session_state.hook_lab_result:
+                        result = st.session_state.hook_lab_result
+                        if "error" in result:
+                            st.error(result['error'])
+                        else:
+                            st.markdown("### Hook Lab Results:")
+                            st.markdown(result['hook_lab_text'])
+
                     if 'script' in st.session_state.script and st.session_state.script.get('script'):
                         st.subheader("Step 5: Repurpose This Content")
                         target_platforms = st.multiselect("Select platforms:", ["LinkedIn Post", "Twitter Thread"], default=["LinkedIn Post"])
