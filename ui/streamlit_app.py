@@ -10,7 +10,6 @@ st.set_page_config(page_title="Viralyst AI: Content Strategy Suite", layout="wid
 # --- Initialize Chatbot and State ---
 if 'chatbot' not in st.session_state:
     st.session_state.chatbot = Chatbot()
-# Initialize all necessary state variables
 if 'content_plan' not in st.session_state:
     st.session_state.content_plan = []
 if 'selected_idea' not in st.session_state:
@@ -39,6 +38,15 @@ if 'integrated_calendar' not in st.session_state:
     st.session_state.integrated_calendar = None
 if 'integrated_localized' not in st.session_state:
     st.session_state.integrated_localized = None
+
+# --- Callback functions to safely update widget state ---
+def update_text_input(widget_key, suggestion):
+    st.session_state[widget_key] = suggestion
+    # Clear the suggestions list after a selection is made
+    if widget_key == "niche_main":
+        st.session_state.niche_suggestions = []
+    elif widget_key == "persona_main":
+        st.session_state.persona_suggestions = []
 
 # --- UI Layout ---
 st.title("🚀 Viralyst AI: Content Strategy Suite")
@@ -69,13 +77,10 @@ with main_tab:
                 if "suggestions" in result:
                     st.session_state.niche_suggestions = result["suggestions"]
         
-        if st.session_state.niche_suggestions:
+        if 'niche_suggestions' in st.session_state and st.session_state.niche_suggestions:
             st.write("Click to use a suggestion:")
             for sugg in st.session_state.niche_suggestions:
-                if st.button(sugg, key=f"niche_{sugg}"):
-                    st.session_state.niche_main = sugg
-                    st.session_state.niche_suggestions = []
-                    st.rerun()
+                st.button(sugg, key=f"niche_{sugg}", on_click=update_text_input, args=("niche_main", sugg))
 
         audience = st.text_input("Describe your target audience:", "Gen Z interested in eco-friendly products")
         tone_options = ["Authoritative", "Relatable", "Humorous", "Inspirational", "Sarcastic", "Empathetic", "Professional", "Casual"]
@@ -88,13 +93,10 @@ with main_tab:
                 if "suggestions" in result:
                     st.session_state.persona_suggestions = result["suggestions"]
 
-        if st.session_state.persona_suggestions:
+        if 'persona_suggestions' in st.session_state and st.session_state.persona_suggestions:
             st.write("Click to use a suggestion:")
             for sugg in st.session_state.persona_suggestions:
-                if st.button(sugg, key=f"persona_{sugg}"):
-                    st.session_state.persona_main = sugg
-                    st.session_state.persona_suggestions = []
-                    st.rerun()
+                st.button(sugg, key=f"persona_{sugg}", on_click=update_text_input, args=("persona_main", sugg))
 
     with st.container(border=True):
         st.subheader("Step 2: Choose Your Content Plan")
@@ -262,7 +264,7 @@ with trends_tab:
             st.success(result['prediction_text'])
 
 with reverse_tab:
-    st.header("Reverse Virality Engine �")
+    st.header("Reverse Virality Engine 🔄")
     st.markdown("Paste a URL of a viral post and tell us your niche. The AI will break down its success and remix the format for you.")
     with st.container(border=True):
         viral_url_rv = st.text_input("Enter the URL of the viral post:", key="viral_url_rv")
