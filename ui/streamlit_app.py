@@ -1,6 +1,7 @@
 import streamlit as st
 import sys
 import os
+import re
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from app.chatbot import Chatbot
@@ -34,15 +35,18 @@ if 'niche_suggestions' not in st.session_state:
     st.session_state.niche_suggestions = []
 if 'persona_suggestions' not in st.session_state:
     st.session_state.persona_suggestions = []
+if 'selected_persona' not in st.session_state:
+    st.session_state.selected_persona = None
 if 'integrated_calendar' not in st.session_state:
     st.session_state.integrated_calendar = None
 if 'integrated_localized' not in st.session_state:
     st.session_state.integrated_localized = None
+if 'expanded_localized_idea' not in st.session_state:
+    st.session_state.expanded_localized_idea = {}
 
 # --- Callback functions to safely update widget state ---
 def update_text_input(widget_key, suggestion):
     st.session_state[widget_key] = suggestion
-    # Clear the suggestions list after a selection is made
     if widget_key == "niche_main":
         st.session_state.niche_suggestions = []
     elif widget_key == "persona_main":
@@ -77,7 +81,7 @@ with main_tab:
                 if "suggestions" in result:
                     st.session_state.niche_suggestions = result["suggestions"]
         
-        if 'niche_suggestions' in st.session_state and st.session_state.niche_suggestions:
+        if st.session_state.niche_suggestions:
             st.write("Click to use a suggestion:")
             for sugg in st.session_state.niche_suggestions:
                 st.button(sugg, key=f"niche_{sugg}", on_click=update_text_input, args=("niche_main", sugg))
@@ -86,32 +90,36 @@ with main_tab:
         tone_options = ["Authoritative", "Relatable", "Humorous", "Inspirational", "Sarcastic", "Empathetic", "Professional", "Casual"]
         tone = st.selectbox("Select your tone:", tone_options)
         
-        persona = st.text_area("Describe your creator persona:", "An upbeat and authentic guide to sustainable living.", key="persona_main")
-        if st.button("Suggest Personas", key="suggest_persona"):
-            with st.spinner("AI is brainstorming persona ideas..."):
-                result = st.session_state.chatbot.get_suggestions(persona, 'persona')
-                if "suggestions" in result:
-                    st.session_state.persona_suggestions = result["suggestions"]
-
-        if 'persona_suggestions' in st.session_state and st.session_state.persona_suggestions:
-            st.write("Click to use a suggestion:")
-            for sugg in st.session_state.persona_suggestions:
-                st.button(sugg, key=f"persona_{sugg}", on_click=update_text_input, args=("persona_main", sugg))
+        st.subheader("Step 2: Select Your Target Persona")
+        if st.button("🤖 Generate Audience Personas", key="generate_personas"):
+            with st.spinner("AI is building detailed audience personas..."):
+                result = st.session_state.chatbot.get_suggestions(None, 'persona', niche=niche)
+                if "personas" in result:
+                    st.session_state.persona_suggestions = result["personas"]
+                    st.session_state.selected_persona = None # Reset selection
+        
+        if st.session_state.persona_suggestions:
+            persona_options = [f"{p.get('name', '')}: {p.get('profile', '')}" for p in st.session_state.persona_suggestions]
+            selected_persona_str = st.radio("Select a persona to target:", persona_options, key="persona_select")
+            
+            for p in st.session_state.persona_suggestions:
+                if f"{p.get('name', '')}: {p.get('profile', '')}" == selected_persona_str:
+                    st.session_state.selected_persona = p
+                    with st.expander("View Persona Details"):
+                        st.markdown(f"**Pain Point:** {p.get('pain_point')}")
+                        st.markdown(f"**Goal:** {p.get('goal')}")
+                    break
 
     with st.container(border=True):
-        st.subheader("Step 2: Choose Your Content Plan")
-        
+        st.subheader("Step 3: Choose Your Content Plan")
         platform = st.selectbox("Select Primary Platform:", ["Instagram", "TikTok", "YouTube", "LinkedIn", "Twitter/X", "Facebook", "Blog"])
         plan_type = st.radio("Select Plan Type:", ("Single Idea", "3-Part Content Series", "Monthly Content Theme"), horizontal=True)
         
         if st.button("✨ Generate Plan", type="primary"):
             with st.spinner(f"Generating a {plan_type} for {platform}..."):
-                st.session_state.content_plan = st.session_state.chatbot.generate_content_plan(niche, tone, audience, plan_type, platform)
+                st.session_state.content_plan = st.session_state.chatbot.generate_content_plan(niche, tone, audience, plan_type, platform, st.session_state.selected_persona)
                 st.session_state.selected_idea = None
                 st.session_state.script = None
-                st.session_state.hook_analysis = None
-                st.session_state.integrated_calendar = None
-                st.session_state.integrated_localized = None
 
     if st.session_state.content_plan:
         st.subheader("Your Generated Content Plan:")
@@ -127,6 +135,8 @@ with main_tab:
                         st.image(item['images'], width=150)
                     with st.expander("Show Research & References"):
                         links = item.get('links', {})
+                        # --- THIS IS THE FIX ---
+                        # Replaced list comprehensions with standard for loops for stability
                         st.markdown("**Articles:**")
                         for l in links.get('articles', []):
                             st.markdown(f"- [{l.get('title')}]({l.get('link')})")
@@ -146,11 +156,11 @@ with main_tab:
                         st.rerun()
 
     if st.session_state.selected_idea:
-        st.header(f"Step 3: Develop & Enhance Script for '{st.session_state.selected_idea}'")
+        st.header(f"Step 4: Develop & Enhance Script for '{st.session_state.selected_idea}'")
         with st.container(border=True):
             if not st.session_state.script:
                 with st.spinner("Writing a high-quality script with AI..."):
-                    st.session_state.script = st.session_state.chatbot.generate_script(st.session_state.selected_idea, platform, persona)
+                    st.session_state.script = st.session_state.chatbot.generate_script(st.session_state.selected_idea, platform, st.session_state.selected_persona.get('profile') if st.session_state.selected_persona else persona)
             if st.session_state.script:
                 if "error" in st.session_state.script: st.error(st.session_state.script['error'])
                 else:
@@ -171,7 +181,7 @@ with main_tab:
                     st.markdown("#### #️⃣ Hashtags"); st.success(st.session_state.script.get('hashtags', 'N/A'))
                     st.markdown("#### 🎵 Trending Audio Suggestions"); st.info(st.session_state.script.get('audio', 'No audio suggestions available.'))
                     if 'script' in st.session_state.script and st.session_state.script.get('script'):
-                        st.subheader("Step 4: Repurpose This Content")
+                        st.subheader("Step 5: Repurpose This Content")
                         target_platforms = st.multiselect("Select platforms:", ["LinkedIn Post", "Twitter Thread"], default=["LinkedIn Post"])
                         if st.button("🚀 Repurpose Content", type="primary"):
                             with st.spinner("Adapting content..."):
@@ -201,11 +211,24 @@ with main_tab:
         if st.button("Generate Localized Ideas"):
             with st.spinner(f"Generating ideas in {integrated_lang} for {integrated_region}..."):
                 st.session_state.integrated_localized = st.session_state.chatbot.generate_localized_ideas(niche, audience, tone, integrated_lang, integrated_region)
+                st.session_state.expanded_localized_idea = {} # Reset expanded ideas
         if 'integrated_localized' in st.session_state and st.session_state.integrated_localized:
             result = st.session_state.integrated_localized
             if "error" in result: st.error(result['error'])
             else:
-                st.info(result['ideas_text'])
+                localized_ideas = [line.strip() for line in re.split(r'\d+\.\s*', result['ideas_text']) if line.strip()]
+                for idx, idea in enumerate(localized_ideas):
+                    st.info(idea)
+                    if st.button(f"Expand Idea {idx+1}", key=f"expand_{idx}"):
+                        with st.spinner("AI is elaborating..."):
+                            expanded_result = st.session_state.chatbot.expand_localized_idea(integrated_lang, integrated_region, idea)
+                            st.session_state.expanded_localized_idea[idx] = expanded_result
+                    if idx in st.session_state.expanded_localized_idea:
+                        expanded_data = st.session_state.expanded_localized_idea[idx]
+                        if "error" in expanded_data:
+                            st.warning(expanded_data["error"])
+                        else:
+                            st.success(expanded_data.get("expanded_idea"))
 
 with calendar_tab:
     st.header("Strategic Content Calendar Generator")
